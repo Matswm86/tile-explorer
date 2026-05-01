@@ -45,7 +45,7 @@ Permanent versioned downloads are also published to the
 | Button | What it does |
 |---|---|
 | **Undo** | Sends the last tile you tapped back to the board. |
-| **Clear 3** | Permanently deletes the leftmost 3 tiles in the tray. |
+| **Clear 3** | Deletes the leftmost 3 tiles in the tray, **plus** enough matching board tiles of the same icons to keep every icon's remaining count a multiple of 3 (so the level stays solvable). |
 | **Shuffle** | Randomly re-assigns the icons on remaining board tiles. |
 
 ## Run from source (desktop)

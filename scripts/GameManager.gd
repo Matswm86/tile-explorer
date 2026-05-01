@@ -184,22 +184,61 @@ func _on_remove3_pressed() -> void:
 	state = GameState.BUSY
 	board.input_locked = true
 	remove3_left -= 1
-	var to_kill: Array[Tile] = []
+	# Step 1: pick the 3 leftmost tray tiles.
+	var tray_kill: Array[Tile] = []
 	for i in 3:
-		to_kill.append(tray.tiles[i])
-	for t in to_kill:
+		tray_kill.append(tray.tiles[i])
+	# Step 2: for each icon among those 3, kill enough additional tiles
+	# (board first, then leftover tray) so the icon's total remaining count
+	# stays a multiple of 3 — otherwise the level becomes unsolvable.
+	var killed_by_icon: Dictionary = {}
+	for t in tray_kill:
+		killed_by_icon[t.icon_id] = int(killed_by_icon.get(t.icon_id, 0)) + 1
+	var extra_kill: Array[Tile] = []
+	for icon_id in killed_by_icon.keys():
+		var remaining: int = 0
+		for t in board.tiles:
+			if t.icon_id == int(icon_id) and not (t in tray_kill):
+				remaining += 1
+		var need: int = remaining % 3
+		if need == 0:
+			continue
+		# Prefer board (not in tray) so the visible board cleans up.
+		var found: int = 0
+		for t in board.tiles:
+			if found >= need:
+				break
+			if t.icon_id == int(icon_id) and not t.in_tray and not (t in tray_kill) and not (t in extra_kill):
+				extra_kill.append(t)
+				found += 1
+		# Fallback to tray tiles outside the leftmost-3 cut.
+		if found < need:
+			for t in tray.tiles:
+				if found >= need:
+					break
+				if t.icon_id == int(icon_id) and not (t in tray_kill) and not (t in extra_kill):
+					extra_kill.append(t)
+					found += 1
+	var all_kill: Array[Tile] = []
+	for t in tray_kill:
+		all_kill.append(t)
+	for t in extra_kill:
+		all_kill.append(t)
+	# Step 3: drop refs from every collection.
+	for t in all_kill:
 		tray.tiles.erase(t)
 		move_stack.erase(t)
 		board.tiles.erase(t)
+	# Step 4: animate everything fading + scaling out, slide tray.
 	var tw: Tween = create_tween().set_parallel(true)
-	for t in to_kill:
-		tw.tween_property(t, "scale", Vector2(0.2, 0.2), 0.24)\
+	for t in all_kill:
+		tw.tween_property(t, "scale", Vector2(0.2, 0.2), 0.28)\
 			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-		tw.tween_property(t, "modulate:a", 0.0, 0.24)
+		tw.tween_property(t, "modulate:a", 0.0, 0.28)
 	for i in tray.tiles.size():
 		tw.tween_property(tray.tiles[i], "position", tray.slot_position(i), 0.20)
 	await tw.finished
-	for t in to_kill:
+	for t in all_kill:
 		t.queue_free()
 	board.recompute_blocking()
 	_update_progress()
