@@ -8,11 +8,14 @@ const POWERUP_CHARGES_PER_LEVEL: int = 3
 
 @onready var board: Board = $Board
 @onready var tray: Tray = $Tray
+@onready var tray_frame: Node2D = $TrayFrame
 @onready var ui: CanvasLayer = $UI
-@onready var level_label: Label = $UI/HeaderPanel/LevelLabel
-@onready var progress_label: Label = $UI/HeaderPanel/ProgressLabel
-@onready var win_label: Label = $UI/WinLabel
-@onready var lose_label: Label = $UI/LoseLabel
+@onready var level_label: Label = $UI/HeaderCard/LevelLabel
+@onready var progress_label: Label = $UI/HeaderCard/ProgressLabel
+@onready var win_panel: Panel = $UI/WinPanel
+@onready var win_label: Label = $UI/WinPanel/WinLabel
+@onready var lose_panel: Panel = $UI/LosePanel
+@onready var lose_label: Label = $UI/LosePanel/LoseLabel
 @onready var hint_label: Label = $UI/HintLabel
 @onready var reset_button: Button = $UI/ResetButton
 @onready var undo_button: Button = $UI/PowerupBar/UndoButton
@@ -36,7 +39,8 @@ func _ready() -> void:
 	remove3_button.pressed.connect(_on_remove3_pressed)
 	shuffle_button.pressed.connect(_on_shuffle_pressed)
 	# Place tray and board so they don't overlap.
-	tray.origin = Vector2((1080.0 - tray.tray_width()) * 0.5, 230.0)
+	tray.origin = Vector2((1080.0 - tray.tray_width()) * 0.5, 250.0)
+	tray_frame.setup(tray.origin, Tray.SLOTS, Tray.SLOT_SIZE, Tray.SLOT_GAP)
 	load_level(current_level)
 
 func load_level(n: int) -> void:
@@ -49,8 +53,8 @@ func load_level(n: int) -> void:
 	for t in tray.tiles:
 		t.queue_free()
 	tray.tiles.clear()
-	win_label.visible = false
-	lose_label.visible = false
+	win_panel.visible = false
+	lose_panel.visible = false
 	hint_label.visible = false
 	reset_button.visible = true
 	var path: String = "%slevel_%02d.json" % [levels_path, n]
@@ -123,14 +127,14 @@ func _win() -> void:
 	state = GameState.WON
 	board.input_locked = true
 	win_label.text = "Level %d complete\nTap to continue" % current_level
-	win_label.visible = true
+	win_panel.visible = true
 	reset_button.visible = false
 
 func _lose() -> void:
 	state = GameState.LOST
 	board.input_locked = true
 	lose_label.text = "Tray full\nTap to retry"
-	lose_label.visible = true
+	lose_panel.visible = true
 
 func _unhandled_input(event: InputEvent) -> void:
 	var pressed: bool = false

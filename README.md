@@ -4,6 +4,14 @@ A triple-tile match puzzle. Tap tiles from a 3D-stack into a 7-slot tray.
 Match three of the same icon and they vanish. Clear the board to win.
 **No ads, no IAP, no analytics, no tracking.**
 
+<p align="center">
+  <img src="screenshots/inspiration.jpeg" alt="Visual style reference (Tile Trip by Oakever)" width="320"/>
+</p>
+
+The art direction is inspired by Tile Trip — pastel sky, beveled tiles
+with thick outlines, cartoon icons. All graphics are drawn procedurally
+in Godot's `_draw()` (no external assets).
+
 ## Install on Android
 
 **Direct APK download:**

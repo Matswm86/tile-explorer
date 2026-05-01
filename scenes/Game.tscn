@@ -1,123 +1,310 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://scripts/GameManager.gd" id="1_gm"]
-[ext_resource type="Script" path="res://scripts/Board.gd" id="2_board"]
-[ext_resource type="Script" path="res://scripts/Tray.gd" id="3_tray"]
-[ext_resource type="Script" path="res://scripts/Tile.gd" id="4_tile"]
+[ext_resource type="Script" path="res://scripts/Background.gd" id="2_bg"]
+[ext_resource type="Script" path="res://scripts/TrayFrame.gd" id="3_trf"]
+[ext_resource type="Script" path="res://scripts/Board.gd" id="4_board"]
+[ext_resource type="Script" path="res://scripts/Tray.gd" id="5_tray"]
+
+[sub_resource type="StyleBoxFlat" id="SB_HeaderCard"]
+bg_color = Color(1, 1, 1, 0.92)
+border_color = Color(0.18, 0.18, 0.22, 0.6)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+corner_radius_top_left = 26
+corner_radius_top_right = 26
+corner_radius_bottom_right = 26
+corner_radius_bottom_left = 26
+shadow_color = Color(0, 0, 0, 0.18)
+shadow_size = 6
+shadow_offset = Vector2(0, 4)
+
+[sub_resource type="StyleBoxFlat" id="SB_BannerWin"]
+bg_color = Color(0.96, 1, 0.96, 0.96)
+border_color = Color(0.18, 0.50, 0.24, 0.85)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+corner_radius_top_left = 36
+corner_radius_top_right = 36
+corner_radius_bottom_right = 36
+corner_radius_bottom_left = 36
+shadow_color = Color(0, 0, 0, 0.32)
+shadow_size = 10
+shadow_offset = Vector2(0, 6)
+
+[sub_resource type="StyleBoxFlat" id="SB_BannerLose"]
+bg_color = Color(1, 0.94, 0.94, 0.96)
+border_color = Color(0.62, 0.18, 0.18, 0.85)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+corner_radius_top_left = 36
+corner_radius_top_right = 36
+corner_radius_bottom_right = 36
+corner_radius_bottom_left = 36
+shadow_color = Color(0, 0, 0, 0.32)
+shadow_size = 10
+shadow_offset = Vector2(0, 6)
+
+[sub_resource type="StyleBoxFlat" id="SB_Undo"]
+bg_color = Color(0.22, 0.58, 0.96, 1)
+border_color = Color(0.10, 0.30, 0.62, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+corner_radius_top_left = 36
+corner_radius_top_right = 36
+corner_radius_bottom_right = 36
+corner_radius_bottom_left = 36
+shadow_color = Color(0, 0, 0, 0.30)
+shadow_size = 6
+shadow_offset = Vector2(0, 4)
+
+[sub_resource type="StyleBoxFlat" id="SB_Undo_pressed"]
+bg_color = Color(0.16, 0.46, 0.82, 1)
+border_color = Color(0.10, 0.30, 0.62, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+corner_radius_top_left = 36
+corner_radius_top_right = 36
+corner_radius_bottom_right = 36
+corner_radius_bottom_left = 36
+
+[sub_resource type="StyleBoxFlat" id="SB_Remove3"]
+bg_color = Color(0.94, 0.34, 0.40, 1)
+border_color = Color(0.62, 0.10, 0.18, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+corner_radius_top_left = 36
+corner_radius_top_right = 36
+corner_radius_bottom_right = 36
+corner_radius_bottom_left = 36
+shadow_color = Color(0, 0, 0, 0.30)
+shadow_size = 6
+shadow_offset = Vector2(0, 4)
+
+[sub_resource type="StyleBoxFlat" id="SB_Remove3_pressed"]
+bg_color = Color(0.78, 0.24, 0.30, 1)
+border_color = Color(0.62, 0.10, 0.18, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+corner_radius_top_left = 36
+corner_radius_top_right = 36
+corner_radius_bottom_right = 36
+corner_radius_bottom_left = 36
+
+[sub_resource type="StyleBoxFlat" id="SB_Shuffle"]
+bg_color = Color(0.30, 0.78, 0.40, 1)
+border_color = Color(0.10, 0.46, 0.20, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+corner_radius_top_left = 36
+corner_radius_top_right = 36
+corner_radius_bottom_right = 36
+corner_radius_bottom_left = 36
+shadow_color = Color(0, 0, 0, 0.30)
+shadow_size = 6
+shadow_offset = Vector2(0, 4)
+
+[sub_resource type="StyleBoxFlat" id="SB_Shuffle_pressed"]
+bg_color = Color(0.22, 0.62, 0.30, 1)
+border_color = Color(0.10, 0.46, 0.20, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+corner_radius_top_left = 36
+corner_radius_top_right = 36
+corner_radius_bottom_right = 36
+corner_radius_bottom_left = 36
+
+[sub_resource type="StyleBoxFlat" id="SB_Disabled"]
+bg_color = Color(0.65, 0.66, 0.70, 1)
+border_color = Color(0.40, 0.42, 0.46, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+corner_radius_top_left = 36
+corner_radius_top_right = 36
+corner_radius_bottom_right = 36
+corner_radius_bottom_left = 36
+
+[sub_resource type="StyleBoxFlat" id="SB_Reset"]
+bg_color = Color(1, 1, 1, 0.95)
+border_color = Color(0.18, 0.18, 0.22, 0.7)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+corner_radius_top_left = 22
+corner_radius_top_right = 22
+corner_radius_bottom_right = 22
+corner_radius_bottom_left = 22
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1_gm")
 
-[node name="Background" type="ColorRect" parent="."]
-offset_right = 1080.0
-offset_bottom = 1920.0
-color = Color(0.93, 0.96, 1, 1)
-mouse_filter = 2
+[node name="Background" type="Node2D" parent="."]
+script = ExtResource("2_bg")
+
+[node name="TrayFrame" type="Node2D" parent="."]
+script = ExtResource("3_trf")
 
 [node name="Board" type="Node2D" parent="."]
-script = ExtResource("2_board")
+script = ExtResource("4_board")
 
 [node name="Tray" type="Node2D" parent="."]
-script = ExtResource("3_tray")
+script = ExtResource("5_tray")
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="HeaderPanel" type="ColorRect" parent="UI"]
-offset_left = 0.0
-offset_top = 0.0
-offset_right = 1080.0
-offset_bottom = 200.0
-color = Color(1, 1, 1, 0.85)
-mouse_filter = 2
-
-[node name="LevelLabel" type="Label" parent="UI/HeaderPanel"]
-offset_left = 40.0
+[node name="HeaderCard" type="Panel" parent="UI"]
+offset_left = 30.0
 offset_top = 30.0
-offset_right = 1040.0
-offset_bottom = 110.0
-theme_override_font_sizes/font_size = 64
+offset_right = 1050.0
+offset_bottom = 200.0
+theme_override_styles/panel = SubResource("SB_HeaderCard")
+
+[node name="LevelLabel" type="Label" parent="UI/HeaderCard"]
+offset_left = 24.0
+offset_top = 14.0
+offset_right = 996.0
+offset_bottom = 100.0
+theme_override_font_sizes/font_size = 60
 theme_override_colors/font_color = Color(0.12, 0.12, 0.18, 1)
 horizontal_alignment = 1
+vertical_alignment = 1
 text = "Level 1"
 
-[node name="ProgressLabel" type="Label" parent="UI/HeaderPanel"]
-offset_left = 40.0
-offset_top = 120.0
-offset_right = 1040.0
-offset_bottom = 180.0
-theme_override_font_sizes/font_size = 36
-theme_override_colors/font_color = Color(0.36, 0.36, 0.42, 1)
+[node name="ProgressLabel" type="Label" parent="UI/HeaderCard"]
+offset_left = 24.0
+offset_top = 100.0
+offset_right = 996.0
+offset_bottom = 160.0
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(0.36, 0.36, 0.44, 1)
 horizontal_alignment = 1
+vertical_alignment = 1
 text = "Tiles left: 0"
+
+[node name="ResetButton" type="Button" parent="UI"]
+offset_left = 880.0
+offset_top = 50.0
+offset_right = 1030.0
+offset_bottom = 130.0
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(0.18, 0.18, 0.22, 1)
+theme_override_styles/normal = SubResource("SB_Reset")
+theme_override_styles/hover = SubResource("SB_Reset")
+theme_override_styles/pressed = SubResource("SB_Reset")
+text = "Reset"
 
 [node name="HintLabel" type="Label" parent="UI"]
 offset_left = 40.0
-offset_top = 1840.0
+offset_top = 1850.0
 offset_right = 1040.0
 offset_bottom = 1900.0
-theme_override_font_sizes/font_size = 32
-theme_override_colors/font_color = Color(0.20, 0.20, 0.24, 1)
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.20, 0.20, 0.26, 1)
 horizontal_alignment = 1
 text = ""
 visible = false
 
-[node name="WinLabel" type="Label" parent="UI"]
-offset_left = 40.0
-offset_top = 850.0
-offset_right = 1040.0
+[node name="WinPanel" type="Panel" parent="UI"]
+offset_left = 80.0
+offset_top = 820.0
+offset_right = 1000.0
 offset_bottom = 1100.0
-theme_override_font_sizes/font_size = 80
+theme_override_styles/panel = SubResource("SB_BannerWin")
+visible = false
+
+[node name="WinLabel" type="Label" parent="UI/WinPanel"]
+offset_left = 30.0
+offset_top = 30.0
+offset_right = 890.0
+offset_bottom = 250.0
+theme_override_font_sizes/font_size = 76
 theme_override_colors/font_color = Color(0.10, 0.40, 0.18, 1)
-theme_override_constants/outline_size = 8
-theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 text = "Level Complete"
+
+[node name="LosePanel" type="Panel" parent="UI"]
+offset_left = 80.0
+offset_top = 820.0
+offset_right = 1000.0
+offset_bottom = 1100.0
+theme_override_styles/panel = SubResource("SB_BannerLose")
 visible = false
 
-[node name="LoseLabel" type="Label" parent="UI"]
-offset_left = 40.0
-offset_top = 850.0
-offset_right = 1040.0
-offset_bottom = 1100.0
-theme_override_font_sizes/font_size = 80
+[node name="LoseLabel" type="Label" parent="UI/LosePanel"]
+offset_left = 30.0
+offset_top = 30.0
+offset_right = 890.0
+offset_bottom = 250.0
+theme_override_font_sizes/font_size = 76
 theme_override_colors/font_color = Color(0.55, 0.10, 0.10, 1)
-theme_override_constants/outline_size = 8
-theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 text = "Tray full"
-visible = false
 
 [node name="PowerupBar" type="HBoxContainer" parent="UI"]
 offset_left = 30.0
 offset_top = 1700.0
 offset_right = 1050.0
-offset_bottom = 1820.0
-theme_override_constants/separation = 18
+offset_bottom = 1830.0
+theme_override_constants/separation = 22
 alignment = 1
 
 [node name="UndoButton" type="Button" parent="UI/PowerupBar"]
-custom_minimum_size = Vector2(320, 120)
-theme_override_font_sizes/font_size = 36
+custom_minimum_size = Vector2(320, 130)
+theme_override_font_sizes/font_size = 38
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(0.92, 0.95, 1, 1)
+theme_override_colors/font_disabled_color = Color(0.92, 0.92, 0.92, 1)
+theme_override_styles/normal = SubResource("SB_Undo")
+theme_override_styles/hover = SubResource("SB_Undo")
+theme_override_styles/pressed = SubResource("SB_Undo_pressed")
+theme_override_styles/disabled = SubResource("SB_Disabled")
 text = "Undo (3)"
 
 [node name="Remove3Button" type="Button" parent="UI/PowerupBar"]
-custom_minimum_size = Vector2(320, 120)
-theme_override_font_sizes/font_size = 36
+custom_minimum_size = Vector2(320, 130)
+theme_override_font_sizes/font_size = 38
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 0.94, 0.94, 1)
+theme_override_colors/font_disabled_color = Color(0.92, 0.92, 0.92, 1)
+theme_override_styles/normal = SubResource("SB_Remove3")
+theme_override_styles/hover = SubResource("SB_Remove3")
+theme_override_styles/pressed = SubResource("SB_Remove3_pressed")
+theme_override_styles/disabled = SubResource("SB_Disabled")
 text = "Clear 3 (3)"
 
 [node name="ShuffleButton" type="Button" parent="UI/PowerupBar"]
-custom_minimum_size = Vector2(320, 120)
-theme_override_font_sizes/font_size = 36
+custom_minimum_size = Vector2(320, 130)
+theme_override_font_sizes/font_size = 38
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(0.94, 1, 0.94, 1)
+theme_override_colors/font_disabled_color = Color(0.92, 0.92, 0.92, 1)
+theme_override_styles/normal = SubResource("SB_Shuffle")
+theme_override_styles/hover = SubResource("SB_Shuffle")
+theme_override_styles/pressed = SubResource("SB_Shuffle_pressed")
+theme_override_styles/disabled = SubResource("SB_Disabled")
 text = "Shuffle (3)"
-
-[node name="ResetButton" type="Button" parent="UI"]
-offset_left = 880.0
-offset_top = 30.0
-offset_right = 1060.0
-offset_bottom = 110.0
-theme_override_font_sizes/font_size = 36
-text = "Reset"
