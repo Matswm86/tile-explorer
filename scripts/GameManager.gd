@@ -5,7 +5,7 @@ const MATCH_FLASH := preload("res://scripts/MatchFlash.gd")
 
 @export var levels_path: String = "res://data/levels/"
 @export var start_level: int = 1
-@export var max_level: int = 5
+@export var max_level: int = 30
 
 @onready var board: Board = $Board
 @onready var tray: Tray = $Tray

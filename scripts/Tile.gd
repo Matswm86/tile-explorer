@@ -5,7 +5,7 @@ signal tapped(tile)
 
 const TILE_SIZE: float = 130.0
 const CORNER_RADIUS: float = 22.0
-const ICON_RADIUS: float = 40.0
+const ICON_RADIUS: float = 48.0
 
 const BODY_TOP: Color = Color(1.0, 0.99, 0.94)
 const BODY_BOT: Color = Color(0.50, 0.40, 0.24, 0.18)
