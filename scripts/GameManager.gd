@@ -1,6 +1,7 @@
 extends Node2D
 
 const POWERUP_CHARGES_PER_LEVEL: int = 3
+const MATCH_FLASH := preload("res://scripts/MatchFlash.gd")
 
 @export var levels_path: String = "res://data/levels/"
 @export var start_level: int = 1
@@ -99,6 +100,13 @@ func _on_tile_tapped(t: Tile) -> void:
 	state = GameState.BUSY
 	board.input_locked = true
 	move_stack.append(t)
+	# Quick scale-punch on tap before the fly-to-tray.
+	var punch: Tween = create_tween()
+	punch.tween_property(t, "scale", Vector2(1.18, 1.18), 0.06)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	punch.tween_property(t, "scale", Vector2(1.0, 1.0), 0.06)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await punch.finished
 	await tray.add_tile(t).finished
 	# Resolve any triples (loops in the rare case clearing a triple exposes
 	# another, though normally this only fires once per tap).
@@ -106,6 +114,11 @@ func _on_tile_tapped(t: Tile) -> void:
 		var match_info: Dictionary = tray.resolve_matches()
 		if match_info.is_empty():
 			break
+		# Starburst at the centroid of the 3 cleared tiles.
+		var sum := Vector2.ZERO
+		for r in match_info["tiles"]:
+			sum += r.position
+		_spawn_flash(sum / float(match_info["tiles"].size()))
 		await match_info["tween"].finished
 		for r in match_info["tiles"]:
 			move_stack.erase(r)
@@ -122,6 +135,11 @@ func _on_tile_tapped(t: Tile) -> void:
 		return
 	state = GameState.IDLE
 	board.input_locked = false
+
+func _spawn_flash(pos: Vector2) -> void:
+	var flash: Node2D = MATCH_FLASH.new()
+	flash.position = pos
+	add_child(flash)
 
 func _win() -> void:
 	state = GameState.WON

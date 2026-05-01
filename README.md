@@ -73,7 +73,8 @@ on other resolutions).
 ```
 
 - `icon` is an integer index into `Icons.TABLE` in `scripts/Icons.gd` (12
-  built-in shape+color combinations).
+  themed icons: soccer ball, apple, cat, fish, cherry, watermelon, bone,
+  mushroom, ghost, banana, carrot, donut — all drawn procedurally).
 - `layer` is z-order: higher layers cover lower layers. A tile is tappable
   only when no tile on a strictly higher layer overlaps its bounding box.
 - Each icon must appear in a multiple of 3 (so triples can clear).
