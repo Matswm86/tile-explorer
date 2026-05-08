@@ -10,15 +10,18 @@ var radius: float = 80.0
 var ray_color: Color = Color(1.0, 0.96, 0.50, 0.95)
 var ring_color: Color = Color(1.0, 1.0, 0.80, 0.85)
 
+
 func _ready() -> void:
 	queue_redraw()
 	z_index = 100
 	scale = Vector2(0.4, 0.4)
 	var tw: Tween = create_tween().set_parallel(true)
-	tw.tween_property(self, "scale", Vector2(1.6, 1.6), 0.42)\
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(self, "scale", Vector2(1.6, 1.6), 0.42).set_trans(Tween.TRANS_CUBIC).set_ease(
+		Tween.EASE_OUT
+	)
 	tw.tween_property(self, "modulate:a", 0.0, 0.42)
 	tw.chain().tween_callback(Callable(self, "queue_free"))
+
 
 func _draw() -> void:
 	# Soft yellow halo.

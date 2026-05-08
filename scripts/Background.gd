@@ -16,17 +16,22 @@ const HORIZON_Y: float = 1340.0
 const RUG_RECT: Rect2 = Rect2(60, 410, 960, 1280)
 const RUG_INNER: Rect2 = Rect2(78, 428, 924, 1244)
 
+
 func _ready() -> void:
 	queue_redraw()
 
+
 func _draw() -> void:
 	# Sky gradient (top to horizon).
-	Drawing.draw_vertical_gradient(
-		self,
-		Rect2(0, 0, VIEW_W, HORIZON_Y),
-		SKY_TOP,
-		SKY_HORIZON,
-		28,
+	(
+		Drawing
+		. draw_vertical_gradient(
+			self,
+			Rect2(0, 0, VIEW_W, HORIZON_Y),
+			SKY_TOP,
+			SKY_HORIZON,
+			28,
+		)
 	)
 	# Sun in upper-right.
 	_draw_sun(Vector2(880, 230), 75)
@@ -38,12 +43,15 @@ func _draw() -> void:
 	# Castle silhouette on the horizon.
 	_draw_castle()
 	# Ground gradient.
-	Drawing.draw_vertical_gradient(
-		self,
-		Rect2(0, HORIZON_Y, VIEW_W, VIEW_H - HORIZON_Y),
-		GROUND_NEAR,
-		GROUND_FAR,
-		16,
+	(
+		Drawing
+		. draw_vertical_gradient(
+			self,
+			Rect2(0, HORIZON_Y, VIEW_W, VIEW_H - HORIZON_Y),
+			GROUND_NEAR,
+			GROUND_FAR,
+			16,
+		)
 	)
 	# Tiny grass tufts scattered on the ground.
 	_draw_grass_tufts()
@@ -52,7 +60,10 @@ func _draw() -> void:
 	Drawing.draw_rounded_rect(self, RUG_RECT, 60, RUG)
 	Drawing.stroke_rounded_rect(self, RUG_RECT, 60, 5, RUG_TRIM)
 	# Inner highlight band on top of rug.
-	Drawing.draw_rounded_rect(self, Rect2(RUG_INNER.position, Vector2(RUG_INNER.size.x, 60)), 30, Color(1, 1, 1, 0.25))
+	Drawing.draw_rounded_rect(
+		self, Rect2(RUG_INNER.position, Vector2(RUG_INNER.size.x, 60)), 30, Color(1, 1, 1, 0.25)
+	)
+
 
 func _draw_cloud(c: Vector2, w: float, h: float) -> void:
 	var col := Color(1, 1, 1, 0.95)
@@ -66,6 +77,7 @@ func _draw_cloud(c: Vector2, w: float, h: float) -> void:
 	draw_circle(c + Vector2(w * 0.35, -h * 0.10), h * 1.05, col)
 	# Top highlight blob.
 	draw_circle(c + Vector2(-w * 0.20, -h * 0.45), h * 0.40, Color(1, 1, 1, 0.7))
+
 
 func _draw_sun(c: Vector2, r: float) -> void:
 	# Glow halo (two soft rings).
@@ -81,6 +93,7 @@ func _draw_sun(c: Vector2, r: float) -> void:
 	draw_circle(c, r, Color(1, 0.93, 0.45))
 	# Highlight crescent.
 	draw_circle(c + Vector2(-r * 0.25, -r * 0.30), r * 0.35, Color(1, 1, 0.8, 0.55))
+
 
 func _draw_hills() -> void:
 	var col := Color(0.66, 0.74, 0.88, 0.7)
@@ -106,19 +119,29 @@ func _draw_hills() -> void:
 	pts2.append(Vector2(VIEW_W, HORIZON_Y))
 	draw_colored_polygon(pts2, col2)
 
+
 func _draw_grass_tufts() -> void:
 	# Scattered small grass strokes near the rug edges, between rug and powerup bar.
 	var col := Color(0.36, 0.66, 0.30, 0.85)
 	var seeds: Array = [
-		Vector2(40, 1380),  Vector2(95, 1395),  Vector2(160, 1370),
-		Vector2(40, 1500),  Vector2(115, 1520), Vector2(46, 1620),
-		Vector2(965, 1380), Vector2(1010, 1400), Vector2(945, 1500),
-		Vector2(1020, 1530), Vector2(975, 1620), Vector2(995, 1660),
+		Vector2(40, 1380),
+		Vector2(95, 1395),
+		Vector2(160, 1370),
+		Vector2(40, 1500),
+		Vector2(115, 1520),
+		Vector2(46, 1620),
+		Vector2(965, 1380),
+		Vector2(1010, 1400),
+		Vector2(945, 1500),
+		Vector2(1020, 1530),
+		Vector2(975, 1620),
+		Vector2(995, 1660),
 	]
 	for s in seeds:
 		draw_line(s, s + Vector2(0, -16), col, 3.0)
 		draw_line(s + Vector2(-5, -8), s + Vector2(-5, -22), col, 3.0)
 		draw_line(s + Vector2(5, -8), s + Vector2(5, -22), col, 3.0)
+
 
 func _draw_castle() -> void:
 	# Centred just above the horizon; cartoonish fortress silhouette.
@@ -135,16 +158,34 @@ func _draw_castle() -> void:
 	draw_rect(Rect2(base_x - 280, base_y - 290, 70, 290), CASTLE_SHADE)
 	draw_rect(Rect2(base_x + 210, base_y - 290, 70, 290), CASTLE_SHADE)
 	# Tower flag poles.
-	draw_line(Vector2(base_x - 245, base_y - 290), Vector2(base_x - 245, base_y - 360), Color(0.30, 0.24, 0.22), 4.0)
-	draw_line(Vector2(base_x + 245, base_y - 290), Vector2(base_x + 245, base_y - 360), Color(0.30, 0.24, 0.22), 4.0)
+	draw_line(
+		Vector2(base_x - 245, base_y - 290),
+		Vector2(base_x - 245, base_y - 360),
+		Color(0.30, 0.24, 0.22),
+		4.0
+	)
+	draw_line(
+		Vector2(base_x + 245, base_y - 290),
+		Vector2(base_x + 245, base_y - 360),
+		Color(0.30, 0.24, 0.22),
+		4.0
+	)
 	# Flags.
-	var flag_a := PackedVector2Array([
-		Vector2(base_x - 245, base_y - 360), Vector2(base_x - 200, base_y - 348), Vector2(base_x - 245, base_y - 336),
-	])
+	var flag_a := PackedVector2Array(
+		[
+			Vector2(base_x - 245, base_y - 360),
+			Vector2(base_x - 200, base_y - 348),
+			Vector2(base_x - 245, base_y - 336),
+		]
+	)
 	draw_colored_polygon(flag_a, Color(0.92, 0.42, 0.42))
-	var flag_b := PackedVector2Array([
-		Vector2(base_x + 245, base_y - 360), Vector2(base_x + 290, base_y - 348), Vector2(base_x + 245, base_y - 336),
-	])
+	var flag_b := PackedVector2Array(
+		[
+			Vector2(base_x + 245, base_y - 360),
+			Vector2(base_x + 290, base_y - 348),
+			Vector2(base_x + 245, base_y - 336),
+		]
+	)
 	draw_colored_polygon(flag_b, Color(0.42, 0.62, 0.92))
 	# Central gate arch (darker).
 	var gate := Rect2(base_x - 50, base_y - 110, 100, 110)

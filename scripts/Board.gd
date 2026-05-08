@@ -9,10 +9,12 @@ const OVERLAP_INSET: float = 6.0  # pixels — tiles must overlap by more than t
 var tiles: Array[Tile] = []
 var input_locked: bool = false
 
+
 func clear_board() -> void:
 	for t in tiles:
 		t.queue_free()
 	tiles.clear()
+
 
 # tile_data: Array of {icon: int, x: float, y: float, layer: int}
 func load_tiles(tile_data: Array) -> void:
@@ -27,6 +29,7 @@ func load_tiles(tile_data: Array) -> void:
 		tiles.append(t)
 	recompute_blocking()
 
+
 func remaining_count() -> int:
 	var n: int = 0
 	for t in tiles:
@@ -34,9 +37,11 @@ func remaining_count() -> int:
 			n += 1
 	return n
 
+
 func remove_tile(t: Tile) -> void:
 	tiles.erase(t)
 	t.queue_free()
+
 
 # A tile is blocked if any other tile on a strictly higher layer overlaps its
 # AABB (with a small inset to avoid spurious edge contacts).
@@ -45,6 +50,7 @@ func recompute_blocking() -> void:
 		if t.in_tray:
 			continue
 		t.set_blocked(_is_blocked(t))
+
 
 func _is_blocked(t: Tile) -> bool:
 	var b1: Rect2 = t.bounds().grow(-OVERLAP_INSET)
@@ -56,6 +62,7 @@ func _is_blocked(t: Tile) -> bool:
 		if b1.intersects(o.bounds()):
 			return true
 	return false
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if input_locked:

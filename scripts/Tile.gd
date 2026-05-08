@@ -21,15 +21,19 @@ var blocked: bool = true
 var in_tray: bool = false
 var animating: bool = false
 
+
 func _ready() -> void:
 	z_index = layer
 	queue_redraw()
+
 
 func _draw() -> void:
 	var half: float = TILE_SIZE * 0.5
 	var rect := Rect2(-half, -half, TILE_SIZE, TILE_SIZE)
 	# Drop shadow, offset down-right.
-	Drawing.draw_rounded_rect(self, Rect2(rect.position + Vector2(4, 7), rect.size), CORNER_RADIUS, SHADOW)
+	Drawing.draw_rounded_rect(
+		self, Rect2(rect.position + Vector2(4, 7), rect.size), CORNER_RADIUS, SHADOW
+	)
 	# Tile body.
 	Drawing.draw_rounded_rect(self, rect, CORNER_RADIUS, BODY_TOP)
 	# Bottom shade band (subtle, fakes a vertical cream gradient).
@@ -46,12 +50,15 @@ func _draw() -> void:
 	if blocked and not in_tray:
 		Drawing.draw_rounded_rect(self, rect, CORNER_RADIUS, BLOCK_DIM)
 
+
 func bounds() -> Rect2:
 	var half: float = TILE_SIZE * 0.5
 	return Rect2(position - Vector2(half, half), Vector2(TILE_SIZE, TILE_SIZE))
 
+
 func contains_point(p: Vector2) -> bool:
 	return bounds().has_point(p)
+
 
 func set_blocked(b: bool) -> void:
 	if blocked != b:

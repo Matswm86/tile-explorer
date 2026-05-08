@@ -32,6 +32,7 @@ var undo_left: int = 0
 var remove3_left: int = 0
 var shuffle_left: int = 0
 
+
 func _ready() -> void:
 	current_level = start_level
 	board.tile_tapped.connect(_on_tile_tapped)
@@ -43,6 +44,7 @@ func _ready() -> void:
 	tray.origin = Vector2((1080.0 - tray.tray_width()) * 0.5, 250.0)
 	tray_frame.setup(tray.origin, Tray.SLOTS, Tray.SLOT_SIZE, Tray.SLOT_GAP)
 	load_level(current_level)
+
 
 func load_level(n: int) -> void:
 	state = GameState.BUSY
@@ -81,8 +83,10 @@ func load_level(n: int) -> void:
 	board.input_locked = false
 	state = GameState.IDLE
 
+
 func _update_progress() -> void:
 	progress_label.text = "Tiles left: %d" % board.remaining_count()
+
 
 func _update_powerup_labels() -> void:
 	undo_button.text = "Undo (%d)" % undo_left
@@ -91,6 +95,7 @@ func _update_powerup_labels() -> void:
 	undo_button.disabled = undo_left <= 0 or move_stack.is_empty()
 	remove3_button.disabled = remove3_left <= 0 or tray.size() < 3
 	shuffle_button.disabled = shuffle_left <= 0 or board.remaining_count() == 0
+
 
 func _on_tile_tapped(t: Tile) -> void:
 	if state != GameState.IDLE:
@@ -102,10 +107,15 @@ func _on_tile_tapped(t: Tile) -> void:
 	move_stack.append(t)
 	# Quick scale-punch on tap before the fly-to-tray.
 	var punch: Tween = create_tween()
-	punch.tween_property(t, "scale", Vector2(1.18, 1.18), 0.06)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	punch.tween_property(t, "scale", Vector2(1.0, 1.0), 0.06)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	(
+		punch
+		. tween_property(t, "scale", Vector2(1.18, 1.18), 0.06)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	punch.tween_property(t, "scale", Vector2(1.0, 1.0), 0.06).set_trans(Tween.TRANS_QUAD).set_ease(
+		Tween.EASE_IN
+	)
 	await punch.finished
 	await tray.add_tile(t).finished
 	# Resolve any triples (loops in the rare case clearing a triple exposes
@@ -136,10 +146,12 @@ func _on_tile_tapped(t: Tile) -> void:
 	state = GameState.IDLE
 	board.input_locked = false
 
+
 func _spawn_flash(pos: Vector2) -> void:
 	var flash: Node2D = MATCH_FLASH.new()
 	flash.position = pos
 	add_child(flash)
+
 
 func _win() -> void:
 	state = GameState.WON
@@ -148,17 +160,21 @@ func _win() -> void:
 	win_panel.visible = true
 	reset_button.visible = false
 
+
 func _lose() -> void:
 	state = GameState.LOST
 	board.input_locked = true
 	lose_label.text = "Tray full\nTap to retry"
 	lose_panel.visible = true
 
+
 func _unhandled_input(event: InputEvent) -> void:
 	var pressed: bool = false
 	if event is InputEventScreenTouch and event.pressed:
 		pressed = true
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	elif (
+		event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
+	):
 		pressed = true
 	if not pressed:
 		return
@@ -172,8 +188,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		load_level(current_level)
 		get_viewport().set_input_as_handled()
 
+
 func _on_reset_pressed() -> void:
 	load_level(current_level)
+
 
 func _on_undo_pressed() -> void:
 	if state != GameState.IDLE or undo_left <= 0 or move_stack.is_empty():
@@ -185,8 +203,9 @@ func _on_undo_pressed() -> void:
 	t.in_tray = false
 	var slide: Tween = tray.remove_tile(t)
 	var fly: Tween = create_tween()
-	fly.tween_property(t, "position", t.board_position, 0.26)\
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	fly.tween_property(t, "position", t.board_position, 0.26).set_trans(Tween.TRANS_CUBIC).set_ease(
+		Tween.EASE_OUT
+	)
 	await fly.finished
 	if slide.is_valid():
 		await slide.finished
@@ -195,6 +214,7 @@ func _on_undo_pressed() -> void:
 	_update_powerup_labels()
 	state = GameState.IDLE
 	board.input_locked = false
+
 
 func _on_remove3_pressed() -> void:
 	if state != GameState.IDLE or remove3_left <= 0 or tray.size() < 3:
@@ -226,7 +246,12 @@ func _on_remove3_pressed() -> void:
 		for t in board.tiles:
 			if found >= need:
 				break
-			if t.icon_id == int(icon_id) and not t.in_tray and not (t in tray_kill) and not (t in extra_kill):
+			if (
+				t.icon_id == int(icon_id)
+				and not t.in_tray
+				and not (t in tray_kill)
+				and not (t in extra_kill)
+			):
 				extra_kill.append(t)
 				found += 1
 		# Fallback to tray tiles outside the leftmost-3 cut.
@@ -250,8 +275,12 @@ func _on_remove3_pressed() -> void:
 	# Step 4: animate everything fading + scaling out, slide tray.
 	var tw: Tween = create_tween().set_parallel(true)
 	for t in all_kill:
-		tw.tween_property(t, "scale", Vector2(0.2, 0.2), 0.28)\
-			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		(
+			tw
+			. tween_property(t, "scale", Vector2(0.2, 0.2), 0.28)
+			. set_trans(Tween.TRANS_CUBIC)
+			. set_ease(Tween.EASE_IN)
+		)
 		tw.tween_property(t, "modulate:a", 0.0, 0.28)
 	for i in tray.tiles.size():
 		tw.tween_property(tray.tiles[i], "position", tray.slot_position(i), 0.20)
@@ -266,6 +295,7 @@ func _on_remove3_pressed() -> void:
 		return
 	state = GameState.IDLE
 	board.input_locked = false
+
 
 func _on_shuffle_pressed() -> void:
 	if state != GameState.IDLE or shuffle_left <= 0:
