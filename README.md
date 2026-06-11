@@ -1,16 +1,21 @@
 # Tile Explorer
 
-A triple-tile match puzzle. Tap tiles from a 3D-stack into a 7-slot tray.
-Match three of the same icon and they vanish. Clear the board to win.
+A triple-tile match puzzle, rendered in real 3D. Tap tiles from layered
+stacks into a 7-slot tray. Match three of the same icon and they vanish.
+Clear the board to win.
 **No ads, no IAP, no analytics, no tracking.**
 
 <p align="center">
-  <img src="screenshots/inspiration.jpeg" alt="Visual style reference (Tile Trip by Oakever)" width="320"/>
+  <img src="screenshots/3d-level5.png" alt="Level 5 — layered 3D stacks" width="280"/>
+  <img src="screenshots/3d-level30.png" alt="Level 30 — 216-tile pyramid" width="280"/>
 </p>
 
-The art direction is inspired by Tile Trip — pastel sky, beveled tiles
-with thick outlines, cartoon icons. All graphics are drawn procedurally
-in Godot's `_draw()` (no external assets).
+Since v1.0 the game renders as a true 3D scene: rounded beveled tiles
+(procedural meshes), a perspective camera, a directional sun with real-time
+shadows, arc fly-to-tray animations with landing squash, and particle
+bursts on matches. The 12 cartoon icons are still authored as 2D `_draw()`
+vector art (inspired by Tile Trip) and are baked into textures at startup —
+there are **no external assets** anywhere in the project.
 
 ## Install on Android
 
@@ -34,7 +39,8 @@ Permanent versioned downloads are also published to the
 ## How to play
 
 - Tap any **unblocked** tile (one not covered by another tile above it). It
-  flies into the tray at the top of the screen.
+  flies into the wooden tray at the bottom of the screen. Blocked tiles are
+  dimmed and wiggle when tapped.
 - The tray holds **7 tiles**. Tiles auto-sort by icon so groups stay together.
 - When **three tiles of the same icon** end up in the tray, they clear.
 - **Win** by emptying the board with the tray empty too.
@@ -126,23 +132,35 @@ icon.svg                        App icon
 .github/workflows/
   build-android.yml             CI workflow that produces the APK
 scenes/
-  Game.tscn                     Root scene + UI
-  Tile.tscn                     Tile template (instanced per board tile)
+  Game3D.tscn                   Root 3D scene: camera, sun, sky, UI
 scripts/
-  GameManager.gd                State machine, level loader, power-ups, win/lose
-  Board.gd                      Tile collection, blocking detection, input
-  Tray.gd                       7-slot tray, triple-match logic, animations
-  Tile.gd                       Tile draw + bounds
-  Icons.gd                      12 shape+color icon definitions, draw helpers
+  GameManager3D.gd              State machine, level loader, power-ups, win/lose
+  Board3D.gd                    Tile collection, blocking detection, ray picking
+  Tray3D.gd                     7-slot tray, triple-match logic, arc animations
+  Tile3D.gd                     Rounded-box tile body + icon quad + materials
+  RoundedBox.gd                 Procedural rounded-box ArrayMesh generator
+  IconBaker.gd                  Bakes the 2D icon art into 3D textures at startup
+  Fx3D.gd                       Match-burst and win-confetti particles
+  Icons.gd                      12 themed icon definitions, 2D draw helpers
+  Drawing.gd                    Rounded-rect 2D draw helpers (used by the baker)
 data/levels/
   level_01.json                 …through level_30.json (30 levels)
 ```
+
+### Dev harness
+
+Set `TILE_DEVSHOT=/path/shot.png` to boot the game, screenshot and exit.
+Optional: `TILE_DEVLEVEL=N` (jump to level), `TILE_DEVTAPS=N` (simulate N
+taps through the real ray-picking path and assert triples clear), and
+`TILE_DEVMODE=power|lose` (exercise the power-ups / force the lose path).
+Inert unless the env var is set.
 
 ## Design rules (locked-in defaults)
 
 - Tile size: 130 px square. Viewport: 1080×1920 portrait.
 - Tile-blocking inset: 6 px (tiles must overlap by more than this to count
-  as covering) — see `Board.OVERLAP_INSET`.
+  as covering) — see `Board3D.OVERLAP_INSET`. Blocking runs in the original
+  130 px level space, so 2D-era levels behave identically in 3D.
 - Tray sort: tiles auto-sort by `icon_id`, so same-icon tiles always end up
   adjacent. Triple-match resolves on **count**, not on adjacency.
 - Power-ups reset to 3 charges at the start of each level.
