@@ -38,8 +38,10 @@ var shuffle_left: int = 0
 func _ready() -> void:
 	# Camera + sun orientation set here (matrices in .tscn are unreadable).
 	var cam: Camera3D = $Camera
-	cam.position = Vector3(0, 10.2, 8.2)
-	cam.rotation_degrees = Vector3(-50, 0, 0)
+	# -68 pitch frames the widest level (world x +-3.7, 7-layer stacks) at
+	# ndc x +-0.92 on the 1080x1920 portrait frustum; -50 clipped corners.
+	cam.position = Vector3(0, 14.9, 5.5)
+	cam.rotation_degrees = Vector3(-68, 0, 0)
 	$Sun.rotation_degrees = Vector3(-50, -30, 0)
 	current_level = start_level
 	board.tile_tapped.connect(_on_tile_tapped)
