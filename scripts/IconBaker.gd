@@ -28,7 +28,7 @@ class SlotCanvas:
 
 	func _draw() -> void:
 		var rect := Rect2(10, 10, BAKE_SIZE - 20, BAKE_SIZE - 20)
-		Drawing.draw_rounded_rect(self, rect, 46, Color(0.05, 0.02, 0.0, 0.25))
+		Drawing.draw_rounded_rect(self, rect, 46, Color(0.18, 0.09, 0.03, 0.45))
 
 
 # Single rounded-square texture for the tray slot markers.

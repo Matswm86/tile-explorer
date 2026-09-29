@@ -368,25 +368,74 @@ func _on_shuffle_pressed() -> void:
 
 
 func _build_table() -> void:
+	# Walnut table filling the whole view, with a green felt mat under the board.
 	var table := MeshInstance3D.new()
-	table.mesh = RoundedBox.build(Vector3(16.0, 0.5, 14.0), 0.18, 6)
+	table.mesh = RoundedBox.build(Vector3(40.0, 0.5, 40.0), 0.18, 4)
 	table.position = Vector3(0, -0.25, 0)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.16, 0.45, 0.42)
-	mat.roughness = 0.95
-	table.material_override = mat
+	var wood := StandardMaterial3D.new()
+	wood.albedo_texture = _grain_texture(Color(0.16, 0.10, 0.07), Color(0.27, 0.17, 0.11), 40)
+	wood.uv1_triplanar = true
+	wood.uv1_scale = Vector3(0.025, 0.12, 0.5)
+	wood.roughness = 0.75
+	table.material_override = wood
 	add_child(table)
+	var mat_mesh := MeshInstance3D.new()
+	mat_mesh.mesh = RoundedBox.build(Vector3(8.5, 0.06, 7.1), 0.03, 4)
+	mat_mesh.position = Vector3(0, 0.0, -0.95)
+	var felt := StandardMaterial3D.new()
+	felt.albedo_color = Color(0.08, 0.26, 0.22)
+	felt.roughness = 1.0
+	mat_mesh.material_override = felt
+	add_child(mat_mesh)
+
+
+# Wood grain: low-frequency noise stretched along one axis, mapped between two browns.
+func _grain_texture(dark: Color, light: Color, seed_value: int) -> NoiseTexture2D:
+	var noise := FastNoiseLite.new()
+	noise.seed = seed_value
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	noise.frequency = 0.012
+	noise.fractal_octaves = 3
+	var ramp := Gradient.new()
+	ramp.set_color(0, dark)
+	ramp.set_color(1, light)
+	var tex := NoiseTexture2D.new()
+	tex.width = 512
+	tex.height = 512
+	tex.seamless = true
+	tex.noise = noise
+	tex.color_ramp = ramp
+	# Stretch the noise 1:14 so it reads as long grain lines, not blotches.
+	tex.normalize = true
+	var aniso := noise.duplicate() as FastNoiseLite
+	aniso.frequency = 0.004
+	aniso.domain_warp_enabled = true
+	aniso.domain_warp_amplitude = 40.0
+	aniso.domain_warp_frequency = 0.08
+	tex.noise = aniso
+	return tex
 
 
 func _build_tray_base() -> void:
-	var base := MeshInstance3D.new()
-	base.mesh = RoundedBox.build(Vector3(7.15, 0.28, 1.24), 0.13, 6)
-	base.position = Vector3(0, 0.0, Tray3D.TRAY_Z)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.55, 0.40, 0.30)
-	mat.roughness = 0.85
-	base.material_override = mat
-	add_child(base)
+	# Rimmed wooden rack: a base plank plus four walls, lighter than the table.
+	var rack := StandardMaterial3D.new()
+	rack.albedo_texture = _grain_texture(Color(0.36, 0.23, 0.14), Color(0.50, 0.33, 0.20), 11)
+	rack.uv1_triplanar = true
+	rack.uv1_scale = Vector3(0.08, 0.35, 1.2)
+	rack.roughness = 0.55
+	var parts: Array = [
+		[Vector3(7.15, 0.28, 1.24), Vector3(0, 0.0, Tray3D.TRAY_Z)],
+		[Vector3(7.35, 0.44, 0.12), Vector3(0, 0.08, Tray3D.TRAY_Z - 0.66)],
+		[Vector3(7.35, 0.44, 0.12), Vector3(0, 0.08, Tray3D.TRAY_Z + 0.66)],
+		[Vector3(0.12, 0.44, 1.44), Vector3(-3.66, 0.08, Tray3D.TRAY_Z)],
+		[Vector3(0.12, 0.44, 1.44), Vector3(3.66, 0.08, Tray3D.TRAY_Z)],
+	]
+	for part in parts:
+		var m := MeshInstance3D.new()
+		m.mesh = RoundedBox.build(part[0], 0.05, 4)
+		m.position = part[1]
+		m.material_override = rack
+		add_child(m)
 	# 7 slot markers on the shelf top.
 	var slot_tex: ImageTexture = await IconBaker.bake_slot(self)
 	var slot_mat := StandardMaterial3D.new()
