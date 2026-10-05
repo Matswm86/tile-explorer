@@ -40,21 +40,28 @@ Permanent versioned downloads are also published to the
 ## How to play
 
 - Tap any **unblocked** tile (one not covered by another tile above it). It
-  flies into the wooden tray at the bottom of the screen. Blocked tiles are
-  dimmed and wiggle when tapped.
+  sinks under your finger and flies into the wooden tray when you lift it;
+  slide off before lifting to cancel. A tap that misses every tile takes the
+  nearest free tile within 100 px. Blocked tiles are dimmed and wiggle when
+  touched.
 - The tray holds **7 tiles**. Tiles auto-sort by icon so groups stay together.
 - When **three tiles of the same icon** end up in the tray, they clear.
 - **Win** by emptying the board with the tray empty too.
 - **Lose** when the tray fills with 7 tiles that can't form a triple.
-- The **Reset** button in the header restarts the current level.
+- The round arrow button in the top-right corner restarts the current level.
+  The header shows a flag with the level number and a tile with the number
+  of tiles left. Every button is a picture with no words.
 
 ### Power-ups (3 charges each per level)
 
+Round picture buttons under the tray; dots under each show charges left
+(filled = left, hollow = used).
+
 | Button | What it does |
 |---|---|
-| **Undo** | Sends the last tile you tapped back to the board. |
-| **Clear 3** | Deletes the leftmost 3 tiles in the tray, **plus** enough matching board tiles of the same icons to keep every icon's remaining count a multiple of 3 (so the level stays solvable). |
-| **Shuffle** | Randomly re-assigns the icons on remaining board tiles. |
+| **Undo** (curved arrow) | Sends the last tile you tapped back to the board. |
+| **Clear 3** (three tiles with a burst) | Deletes the leftmost 3 tiles in the tray, **plus** enough matching board tiles of the same icons to keep every icon's remaining count a multiple of 3 (so the level stays solvable). |
+| **Shuffle** (crossed arrows) | Randomly re-assigns the icons on remaining board tiles. |
 
 ## Run from source (desktop)
 
@@ -140,7 +147,10 @@ scenes/
   Game3D.tscn                   Root 3D scene: camera, sun, sky, UI
 scripts/
   GameManager3D.gd              State machine, level loader, power-ups, win/lose,
-                                walnut table + tray rack built in code
+                                walnut table + tray rack built in code, HUD layout
+  RoundButton.gd                Round picture button, acts on release
+  GlyphView.gd                  Display-only picture (header, win/lose card)
+  UiGlyphs.gd                   The HUD pictures, drawn in code
   Board3D.gd                    Tile collection, blocking detection, ray picking
   Tray3D.gd                     7-slot tray, triple-match logic, arc animations
   Tile3D.gd                     Rounded-box tile body + icon quad + materials
@@ -153,6 +163,35 @@ data/levels/
   level_01.json                 …through level_30.json (30 levels)
 ```
 
+## Running inside a host app (MWM Play)
+
+- Touch layout at 1080 px wide: buttons have 216 px touch areas (12.7 mm at
+  430 dpi) and act on release. The top-left 232x232 px square is left empty
+  for the host's home button, and nothing tappable sits in the bottom 256 px.
+  A tap on the win or lose card that starts in either zone does not count.
+- `stretch/aspect="expand"`: taller phones show more table above and below,
+  wider tablets more at the sides; the camera switches between keep-width and
+  keep-height so the 1080x1920 design frame stays in view.
+- On phones with a notch or punch-hole camera the header and restart button
+  move below the display safe area; the restart touch area still reaches the
+  top edge.
+- The game has no audio and no sound button, so the host's
+  `Engine.set_meta(&"mwm_play_shell", true)` changes nothing here.
+- Progress: `user://tile_explorer_save.json` (`current_level`,
+  `highest_level`), written on every win, on pause and on close.
+
+## Screenshot and touch bot
+
+```bash
+CAPTURE_DIR=/tmp/shots godot --audio-driver Dummy --resolution 1080x1920 res://tests/capture.tscn
+```
+
+Sends real touches: checks tiles and buttons act on release, prints every
+touch area in px and mm, checks the corner and wrist strip are free
+(`ZONES PASS`), plays level 1 to a win, forces a loss and saves screenshots
+of levels 1, 5 and 30 plus a fake 120 px camera cutout. `CAPTURE_SHELL=1`
+runs it as if inside MWM Play. `tests/` is not exported.
+
 ### Dev harness
 
 Set `TILE_DEVSHOT=/path/shot.png` to boot the game, screenshot and exit.
@@ -163,7 +202,11 @@ Inert unless the env var is set.
 
 ## Design rules (locked-in defaults)
 
-- Tile size: 130 px square. Viewport: 1080×1920 portrait.
+- Tile size: 130 px square in level space, drawn about 92-119 px wide on
+  screen. Viewport: 1080×1920 portrait. Tiles cannot reach a 200 px drawn
+  size: level 30 needs 8 columns across 1080 px, and the tray rack, which is
+  in the same 3D scene, already spans the width. The 100 px snap radius
+  gives lone tiles a 200 px touch circle instead.
 - Tile-blocking inset: 6 px (tiles must overlap by more than this to count
   as covering) — see `Board3D.OVERLAP_INSET`. Blocking runs in the original
   130 px level space, so 2D-era levels behave identically in 3D.
