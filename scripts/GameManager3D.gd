@@ -36,6 +36,7 @@ var undo_left: int = 0
 var remove3_left: int = 0
 var shuffle_left: int = 0
 var highest_level: int = 1
+var _panel_touch: int = -1  # touch index that went down on a win/lose panel
 
 
 func _ready() -> void:
@@ -187,23 +188,29 @@ func _show_panel(panel: Panel) -> void:
 	tw.tween_property(panel, "modulate:a", 1.0, 0.18)
 
 
+# Win and lose panels continue on a tap that starts while the panel is up and
+# ends with the finger lifted (action on release, like the tiles).
 func _unhandled_input(event: InputEvent) -> void:
-	var pressed: bool = false
-	if event is InputEventScreenTouch and event.pressed:
-		pressed = true
-	elif (
-		event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
-	):
-		pressed = true
-	if not pressed:
+	if not (event is InputEventScreenTouch):
 		return
+	if state != GameState.WON and state != GameState.LOST:
+		_panel_touch = -1
+		return
+	var touch := event as InputEventScreenTouch
+	if touch.pressed:
+		if _panel_touch < 0:
+			_panel_touch = touch.index
+		get_viewport().set_input_as_handled()
+		return
+	if touch.index != _panel_touch:
+		return
+	_panel_touch = -1
+	get_viewport().set_input_as_handled()
 	if state == GameState.WON:
 		current_level = _next_level()
 		load_level(current_level)
-		get_viewport().set_input_as_handled()
-	elif state == GameState.LOST:
+	else:
 		load_level(current_level)
-		get_viewport().set_input_as_handled()
 
 
 func _on_reset_pressed() -> void:

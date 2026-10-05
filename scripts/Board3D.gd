@@ -11,6 +11,12 @@ signal tile_tapped(tile)
 signal blocked_tapped(tile)
 
 const OVERLAP_INSET: float = 6.0  # px — tiles must overlap by more than this
+## A touch that misses every tile takes the nearest free tile whose centre is
+## this close on screen, so a lone tile has a 200 px wide touch circle (12.7 mm
+## at 400 dpi) although it is drawn about 100 px wide.
+const SNAP_RADIUS_PX: float = 100.0
+## Touch-down feedback: the touched tile sinks to this scale until release.
+const PRESS_SCALE: float = 0.9
 
 # px-space -> world-space mapping. Levels live in a 1080x1920 layout with
 # board content at x 120..960, y 540..1250.
@@ -19,6 +25,8 @@ const WORLD_Z_OFFSET: float = -0.85  # shift board up-screen, away from tray
 
 var tiles: Array[Tile3D] = []
 var input_locked: bool = false
+var _pressed_tile: Tile3D = null
+var _press_index: int = -1
 
 @onready var camera: Camera3D = get_viewport().get_camera_3d()
 
@@ -77,27 +85,57 @@ func _is_blocked(t: Tile3D) -> bool:
 	return false
 
 
+# Touch-down only gives feedback (the tile sinks, a blocked tile wiggles). The
+# move happens on release, and only if the finger lifts over the same tile, so
+# a resting palm or a finger sliding off does nothing. Mouse clicks arrive as
+# touches through emulate_touch_from_mouse.
 func _unhandled_input(event: InputEvent) -> void:
-	if input_locked:
+	if not (event is InputEventScreenTouch):
 		return
-	var pos: Vector2 = Vector2.INF
-	if event is InputEventScreenTouch:
-		if not event.pressed:
+	var touch := event as InputEventScreenTouch
+	if touch.pressed:
+		if _pressed_tile != null or input_locked:
 			return
-		pos = event.position
-	elif event is InputEventMouseButton:
-		if not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
+		var hit: Tile3D = pick_tile_for_touch(touch.position)
+		if hit == null:
 			return
-		pos = event.position
-	else:
+		if hit.blocked:
+			emit_signal("blocked_tapped", hit)
+			return
+		_pressed_tile = hit
+		_press_index = touch.index
+		hit.scale = Vector3.ONE * PRESS_SCALE
 		return
-	var hit: Tile3D = pick_tile(pos)
-	if hit == null:
+	if touch.index != _press_index or _pressed_tile == null:
 		return
-	if hit.blocked:
-		emit_signal("blocked_tapped", hit)
-	else:
-		emit_signal("tile_tapped", hit)
+	var t: Tile3D = _pressed_tile
+	_pressed_tile = null
+	_press_index = -1
+	if not is_instance_valid(t):
+		return
+	t.scale = Vector3.ONE
+	if input_locked or t.in_tray or t.blocked:
+		return
+	if pick_tile_for_touch(touch.position) == t:
+		emit_signal("tile_tapped", t)
+
+
+# The tile a touch at screen_pos means: the tile under the finger, else the
+# nearest free tile within SNAP_RADIUS_PX of it.
+func pick_tile_for_touch(screen_pos: Vector2) -> Tile3D:
+	var hit: Tile3D = pick_tile(screen_pos)
+	if hit != null or camera == null:
+		return hit
+	var best: Tile3D = null
+	var best_d: float = SNAP_RADIUS_PX
+	for t in tiles:
+		if t.in_tray or t.blocked:
+			continue
+		var d: float = camera.unproject_position(t.global_position).distance_to(screen_pos)
+		if d <= best_d:
+			best_d = d
+			best = t
+	return best
 
 
 # Nearest tile whose world AABB the camera ray through screen_pos intersects.
