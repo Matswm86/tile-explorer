@@ -7,6 +7,20 @@ extends Node3D
 const POWERUP_CHARGES_PER_LEVEL: int = 3
 const SAVE_PATH: String = "user://tile_explorer_save.json"
 const SAVE_VERSION: int = 1
+const RoundButton := preload("res://scripts/RoundButton.gd")
+const GlyphView := preload("res://scripts/GlyphView.gd")
+## HUD layout at 1080 px wide. Touch areas are RoundButton.HIT (216 px). The
+## top-left square stays empty for the MWM Play home button, and nothing
+## tappable sits in the bottom wrist strip (16 mm = 256 px).
+const SHELL_CORNER: float = 232.0
+const WRIST: float = 256.0
+const BUTTON_GAP: float = 44.0
+## Top of the restart disc. A camera cutout deeper than this pushes the top
+## row down by the difference; the touch areas still start at the top edge.
+const TOP_ROW_CLEAR: float = 30.0
+## Design frame the camera was tuned for (widest level at ndc x +-0.92).
+const DESIGN_ASPECT: float = 1920.0 / 1080.0
+const CAMERA_FOV: float = 60.0  # vertical, over the 1920 px design height
 
 @export var levels_path: String = "res://data/levels/"
 @export var start_level: int = 1
@@ -22,10 +36,7 @@ const SAVE_VERSION: int = 1
 @onready var lose_panel: Panel = $UI/LosePanel
 @onready var lose_label: Label = $UI/LosePanel/LoseLabel
 @onready var hint_label: Label = $UI/HintLabel
-@onready var reset_button: Button = $UI/ResetButton
-@onready var undo_button: Button = $UI/PowerupBar/UndoButton
-@onready var remove3_button: Button = $UI/PowerupBar/Remove3Button
-@onready var shuffle_button: Button = $UI/PowerupBar/ShuffleButton
+@onready var header_card: Panel = $UI/HeaderCard
 
 enum GameState { IDLE, BUSY, WON, LOST }
 
@@ -37,6 +48,12 @@ var remove3_left: int = 0
 var shuffle_left: int = 0
 var highest_level: int = 1
 var _panel_touch: int = -1  # touch index that went down on a win/lose panel
+## Test hook: a fake top safe-area inset in window px; < 0 = ask the display.
+var fake_safe_top: float = -1.0
+var reset_button: RoundButton
+var undo_button: RoundButton
+var remove3_button: RoundButton
+var shuffle_button: RoundButton
 
 
 func _ready() -> void:
@@ -51,12 +68,11 @@ func _ready() -> void:
 	_load_progress()
 	board.tile_tapped.connect(_on_tile_tapped)
 	board.blocked_tapped.connect(func(t: Tile3D) -> void: t.shake())
-	reset_button.pressed.connect(_on_reset_pressed)
-	undo_button.pressed.connect(_on_undo_pressed)
-	remove3_button.pressed.connect(_on_remove3_pressed)
-	shuffle_button.pressed.connect(_on_shuffle_pressed)
+	_build_hud()
 	_build_table()
 	_build_tray_base()
+	get_viewport().size_changed.connect(_layout_ui)
+	_layout_ui()
 	# Bake the 12 procedural icons into textures, then install the shared
 	# tile mesh + materials. Must complete before the first level loads.
 	var icon_textures: Array = await IconBaker.bake_icons(self)
@@ -94,7 +110,7 @@ func load_level(n: int) -> void:
 		level_label.text = "Bad level JSON"
 		state = GameState.LOST
 		return
-	level_label.text = "Level %d" % n
+	level_label.text = "%d" % n
 	board.load_tiles(data["tiles"])
 	_update_progress()
 	_update_powerup_labels()
@@ -103,13 +119,13 @@ func load_level(n: int) -> void:
 
 
 func _update_progress() -> void:
-	progress_label.text = "Tiles left: %d" % board.remaining_count()
+	progress_label.text = "%d" % board.remaining_count()
 
 
 func _update_powerup_labels() -> void:
-	undo_button.text = "Undo (%d)" % undo_left
-	remove3_button.text = "Clear 3 (%d)" % remove3_left
-	shuffle_button.text = "Shuffle (%d)" % shuffle_left
+	undo_button.charges = undo_left
+	remove3_button.charges = remove3_left
+	shuffle_button.charges = shuffle_left
 	undo_button.disabled = undo_left <= 0 or move_stack.is_empty()
 	remove3_button.disabled = remove3_left <= 0 or tray.size() < 3
 	shuffle_button.disabled = shuffle_left <= 0 or board.remaining_count() == 0
@@ -162,7 +178,6 @@ func _on_tile_tapped(t: Tile3D) -> void:
 func _win() -> void:
 	state = GameState.WON
 	board.input_locked = true
-	win_label.text = "Level %d complete\nTap to continue" % current_level
 	Fx3D.win_confetti(self, Vector3(0, 4.0, 0))
 	_save_progress(_next_level())
 	_show_panel(win_panel)
@@ -172,7 +187,6 @@ func _win() -> void:
 func _lose() -> void:
 	state = GameState.LOST
 	board.input_locked = true
-	lose_label.text = "Tray full\nTap to retry"
 	_show_panel(lose_panel)
 
 
@@ -189,7 +203,8 @@ func _show_panel(panel: Panel) -> void:
 
 
 # Win and lose panels continue on a tap that starts while the panel is up and
-# ends with the finger lifted (action on release, like the tiles).
+# ends with the finger lifted (action on release, like the tiles). Touches
+# that start in the wrist strip or the shell's home corner do not count.
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventScreenTouch):
 		return
@@ -198,7 +213,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var touch := event as InputEventScreenTouch
 	if touch.pressed:
-		if _panel_touch < 0:
+		if _panel_touch < 0 and not _in_dead_zone(touch.position):
 			_panel_touch = touch.index
 		get_viewport().set_input_as_handled()
 		return
@@ -463,6 +478,122 @@ func _build_tray_base() -> void:
 		q.position = Vector3(p.x, 0.146, p.z)
 		q.rotation_degrees = Vector3(-90, 0, 0)
 		add_child(q)
+
+
+# --- HUD: wordless buttons and icons, laid out for the MWM Play shell -------
+
+
+func _build_hud() -> void:
+	reset_button = _make_button("restart", Color(0.99, 0.97, 0.93), Color(0.30, 0.19, 0.11))
+	reset_button.pressed.connect(_on_reset_pressed)
+	undo_button = _make_button("undo", Color(0.85, 0.62, 0.20), Color(1, 1, 1))
+	undo_button.pressed.connect(_on_undo_pressed)
+	remove3_button = _make_button("clear3", Color(0.78, 0.33, 0.24), Color(1, 1, 1))
+	remove3_button.pressed.connect(_on_remove3_pressed)
+	shuffle_button = _make_button("shuffle", Color(0.18, 0.55, 0.47), Color(1, 1, 1))
+	shuffle_button.pressed.connect(_on_shuffle_pressed)
+	for b in [undo_button, remove3_button, shuffle_button]:
+		b.max_charges = POWERUP_CHARGES_PER_LEVEL
+	# Header: flag + level number, tile + tiles left. Digits, no words.
+	var brown := Color(0.23, 0.14, 0.08)
+	_add_glyph(header_card, "flag", brown, Color(0, 0, 0, 0), Rect2(16, 24, 112, 112))
+	_add_glyph(header_card, "tile", brown, Color(0, 0, 0, 0), Rect2(312, 24, 112, 112))
+	for l in [level_label, progress_label]:
+		l.add_theme_font_size_override("font_size", 84)
+		l.add_theme_color_override("font_color", brown)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	level_label.position = Vector2(136, 0)
+	level_label.size = Vector2(160, 160)
+	progress_label.position = Vector2(432, 0)
+	progress_label.size = Vector2(160, 160)
+	# Win: a star and a "next" arrow. Lose: a full tray and a "try again" arrow.
+	win_label.visible = false
+	lose_label.visible = false
+	# The panels only display; the tap that continues is read in
+	# _unhandled_input, so the GUI must not swallow it.
+	win_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lose_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_add_glyph(
+		win_panel, "star", Color(0.96, 0.72, 0.12), Color(0, 0, 0, 0), Rect2(150, 30, 220, 220)
+	)
+	_add_glyph(win_panel, "next", Color(1, 1, 1), Color(0.10, 0.42, 0.20), Rect2(560, 40, 200, 200))
+	var red := Color(0.58, 0.12, 0.12)
+	_add_glyph(lose_panel, "tray_full", red, Color(0, 0, 0, 0), Rect2(110, 30, 340, 220))
+	_add_glyph(lose_panel, "restart", Color(1, 1, 1), red, Rect2(560, 40, 200, 200))
+
+
+func _make_button(kind: String, accent: Color, ink: Color) -> RoundButton:
+	var b := RoundButton.new()
+	b.kind = kind
+	b.accent = accent
+	b.ink = ink
+	ui.add_child(b)
+	return b
+
+
+func _add_glyph(parent: Control, kind: String, ink: Color, disc: Color, r: Rect2) -> void:
+	var g := GlyphView.new()
+	g.kind = kind
+	g.ink = ink
+	g.disc = disc
+	g.position = r.position
+	g.size = r.size
+	parent.add_child(g)
+
+
+func _layout_ui() -> void:
+	var vs: Vector2 = get_viewport().get_visible_rect().size
+	# Taller screens show more table above and below, wider ones more at the
+	# sides; the 1080x1920 design frame always stays in view.
+	var cam: Camera3D = $Camera
+	# Under KEEP_WIDTH the fov is horizontal, so convert the design fov.
+	if vs.y / vs.x > DESIGN_ASPECT:
+		cam.keep_aspect = Camera3D.KEEP_WIDTH
+		var half: float = tan(deg_to_rad(CAMERA_FOV * 0.5)) / DESIGN_ASPECT
+		cam.fov = rad_to_deg(2.0 * atan(half))
+	else:
+		cam.keep_aspect = Camera3D.KEEP_HEIGHT
+		cam.fov = CAMERA_FOV
+	var hit: float = RoundButton.HIT
+	var dy: float = maxf(0.0, safe_top_inset() - TOP_ROW_CLEAR)
+	# Restart in the top-right corner, its touch area running to both edges.
+	reset_button.top_pad = dy
+	reset_button.size = Vector2(hit, hit + dy)
+	reset_button.position = Vector2(vs.x - hit, 0)
+	reset_button.queue_redraw()
+	# Header between the free top-left square and the restart button.
+	header_card.position = Vector2(SHELL_CORNER + 16.0, 40.0 + dy)
+	header_card.size = Vector2(vs.x - hit - 16.0 - header_card.position.x, 160.0)
+	# Power-ups just under the tray rack, never into the wrist strip.
+	var rim_y: float = cam.unproject_position(Vector3(0, 0.3, Tray3D.TRAY_Z + 0.72)).y
+	var row_y: float = minf(rim_y + 2.0, vs.y - WRIST - hit)
+	var row_w: float = hit * 3.0 + BUTTON_GAP * 2.0
+	var bx: float = (vs.x - row_w) * 0.5
+	for b in [undo_button, remove3_button, shuffle_button]:
+		b.position = Vector2(bx, row_y)
+		bx += hit + BUTTON_GAP
+	for p in [win_panel, lose_panel]:
+		p.position = Vector2((vs.x - p.size.x) * 0.5, (vs.y - p.size.y) * 0.5)
+	hint_label.position = Vector2((vs.x - hint_label.size.x) * 0.5, vs.y - 70.0)
+
+
+func _in_dead_zone(p: Vector2) -> bool:
+	var vs: Vector2 = get_viewport().get_visible_rect().size
+	return p.y >= vs.y - WRIST or (p.x < SHELL_CORNER and p.y < SHELL_CORNER)
+
+
+## Depth of the top screen cutout in viewport px (0 on desktop and on phones
+## without a cutout). Uses the display safe area on phones, or fake_safe_top.
+func safe_top_inset() -> float:
+	var top_px: float = fake_safe_top
+	if top_px < 0.0:
+		if not OS.has_feature("mobile"):
+			return 0.0
+		top_px = float(DisplayServer.get_display_safe_area().position.y)
+	var win: Vector2i = DisplayServer.window_get_size()
+	if win.y <= 0:
+		return 0.0
+	return maxf(0.0, top_px * get_viewport().get_visible_rect().size.y / float(win.y))
 
 
 func _next_level() -> int:
