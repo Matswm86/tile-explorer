@@ -553,7 +553,12 @@ func _maybe_devshot() -> void:
 	img.save_png(shot_path)
 	if taps > 0:
 		var after: int = board.remaining_count()
-		var ok: bool = tapped >= 3 and after <= before - 3 and tray.size() <= 1
+		# Tiles that left the tray again were cleared as triples: at least one
+		# triple, and always whole triples. 5 taps = 1 triple + 2 in the tray.
+		var cleared: int = tapped - tray.size()
+		var ok: bool = (
+			tapped >= 3 and after == before - tapped and cleared >= 3 and cleared % 3 == 0
+		)
 		print(
 			(
 				"DEVSHOT: taps=%d board %d->%d tray=%d => %s"
