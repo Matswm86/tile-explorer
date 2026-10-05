@@ -5,6 +5,8 @@ extends Node3D
 # 2D version — only the rendering and animation layer is new.
 
 const POWERUP_CHARGES_PER_LEVEL: int = 3
+const SAVE_PATH: String = "user://tile_explorer_save.json"
+const SAVE_VERSION: int = 1
 
 @export var levels_path: String = "res://data/levels/"
 @export var start_level: int = 1
@@ -33,6 +35,7 @@ var move_stack: Array[Tile3D] = []  # tray tiles in arrival order (recent last)
 var undo_left: int = 0
 var remove3_left: int = 0
 var shuffle_left: int = 0
+var highest_level: int = 1
 
 
 func _ready() -> void:
@@ -44,6 +47,7 @@ func _ready() -> void:
 	cam.rotation_degrees = Vector3(-68, 0, 0)
 	$Sun.rotation_degrees = Vector3(-50, -30, 0)
 	current_level = start_level
+	_load_progress()
 	board.tile_tapped.connect(_on_tile_tapped)
 	board.blocked_tapped.connect(func(t: Tile3D) -> void: t.shake())
 	reset_button.pressed.connect(_on_reset_pressed)
@@ -159,6 +163,7 @@ func _win() -> void:
 	board.input_locked = true
 	win_label.text = "Level %d complete\nTap to continue" % current_level
 	Fx3D.win_confetti(self, Vector3(0, 4.0, 0))
+	_save_progress(_next_level())
 	_show_panel(win_panel)
 	reset_button.visible = false
 
@@ -193,9 +198,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not pressed:
 		return
 	if state == GameState.WON:
-		current_level += 1
-		if current_level > max_level:
-			current_level = 1
+		current_level = _next_level()
 		load_level(current_level)
 		get_viewport().set_input_as_handled()
 	elif state == GameState.LOST:
@@ -453,6 +456,58 @@ func _build_tray_base() -> void:
 		q.position = Vector3(p.x, 0.146, p.z)
 		q.rotation_degrees = Vector3(-90, 0, 0)
 		add_child(q)
+
+
+func _next_level() -> int:
+	return 1 if current_level + 1 > max_level else current_level + 1
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
+		_save_progress(_next_level() if state == GameState.WON else current_level)
+
+
+# Level progress survives app restarts. Board, tray and power-up state are
+# not saved: the player resumes at the start of the level they were on.
+func _save_progress(level: int) -> void:
+	highest_level = maxi(highest_level, level)
+	var f: FileAccess = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if f == null:
+		push_warning("Save failed: %s" % error_string(FileAccess.get_open_error()))
+		return
+	var data: Dictionary = {
+		"version": SAVE_VERSION, "current_level": level, "highest_level": highest_level
+	}
+	f.store_string(JSON.stringify(data))
+	f.close()
+
+
+# Missing, unreadable or corrupt save: keep the defaults and start fresh.
+func _load_progress() -> void:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return
+	var f: FileAccess = FileAccess.open(SAVE_PATH, FileAccess.READ)
+	if f == null:
+		return
+	var raw: String = f.get_as_text()
+	f.close()
+	var json := JSON.new()
+	if json.parse(raw) != OK or not (json.data is Dictionary):
+		push_warning("Save file unreadable, starting fresh")
+		return
+	var data: Dictionary = json.data
+	var level: Variant = data.get("current_level")
+	if not (level is float or level is int):
+		push_warning("Save file has no level, starting fresh")
+		return
+	current_level = clampi(int(level), 1, max_level)
+	var best: Variant = data.get("highest_level", current_level)
+	highest_level = (
+		clampi(int(best), current_level, max_level)
+		if (best is float or best is int)
+		else current_level
+	)
+	print("Save: resuming at level %d (highest %d)" % [current_level, highest_level])
 
 
 # --- dev harness: TILE_DEVSHOT=/path.png [TILE_DEVTAPS=N] ------------------
