@@ -137,8 +137,8 @@ The full debugging history of this workflow lives in `ball-connect`'s
 ## File map
 
 ```
-project.godot                   Engine settings (1080×1920 portrait, GL Compat)
-export_presets.cfg              Android export preset (gradle build, arm64-v8a)
+project.godot                   Engine settings (1080×1920 portrait, Mobile renderer)
+export_presets.cfg              Android export preset (gradle build, arm64-v8a + armeabi-v7a)
 icon.svg                        App icon
 .github/workflows/
   build-android.yml             CI workflow that produces the APK
@@ -161,6 +161,9 @@ scripts/
   Drawing.gd                    Rounded-rect 2D draw helpers (used by the baker)
 data/levels/
   level_01.json                 …through level_30.json (30 levels)
+tests/
+  capture.gd                    Screenshot and touch bot (not exported)
+  capture.tscn                  Scene that runs the bot
 ```
 
 ## Running inside a host app (MWM Play)
