@@ -1,9 +1,12 @@
-# Tile Explorer
+# MWM Stackling
 
-A triple-tile match puzzle, rendered in real 3D. Tap tiles from layered
-stacks into a 7-slot tray. Match three of the same icon and they vanish.
-Clear the board to win.
+A tile matching puzzle for kids, rendered in real 3D and part of
+[MWM Play](https://play.mwmai.no). Tap tiles from layered stacks into a
+7-slot tray. Match three of the same picture and they vanish. Clear the
+board to win.
 **No ads, no IAP, no analytics, no tracking.**
+
+*Formerly Tile Explorer.*
 
 <p align="center">
   <img src="screenshots/3d-level5.png" alt="Level 5 — layered 3D stacks" width="280"/>
@@ -21,20 +24,20 @@ there are **no external assets** anywhere in the project.
 ## Install on Android
 
 **Direct APK download:**
-https://github.com/Matswm86/tile-explorer/releases/download/latest/tile-explorer.apk
+https://github.com/Matswm86/mwm-stackling/releases/download/latest/mwm-stackling.apk
 
 1. Open that link in your phone's browser and tap to download.
 2. When you tap the downloaded file, Android may say *"For your security, your
    phone is not allowed to install unknown apps from this source."* Tap
    **Settings**, toggle **Allow from this source**, then go back and install.
-3. The app appears as **Tile Explorer**.
+3. The app appears as **MWM Stackling**.
 
 > The APK is **debug-signed** with a stable key (stored as the
 > `ANDROID_DEBUG_KEYSTORE_BASE64` GitHub secret), so reinstalling a newer
 > build over an older one Just Works — no uninstall needed.
 
 Permanent versioned downloads are also published to the
-[Releases page](https://github.com/Matswm86/tile-explorer/releases) when a
+[Releases page](https://github.com/Matswm86/mwm-stackling/releases) when a
 `vX.Y.Z` tag is pushed.
 
 ## How to play
@@ -121,7 +124,7 @@ Every push to `main` triggers `.github/workflows/build-android.yml`, which:
    secret (falls back to generating an ephemeral keystore if the secret
    isn't set, so forks still build).
 4. Writes `editor_settings-4.6.tres` and the build template marker files.
-5. Runs `godot --headless --export-debug "Android" tile-explorer.apk`.
+5. Runs `godot --headless --export-debug "Android" mwm-stackling.apk`.
 6. Uploads the APK as a workflow artifact, **and** updates the rolling
    `latest` pre-release on the Releases page.
 
@@ -180,8 +183,10 @@ tests/
   top edge.
 - The game has no audio and no sound button, so the host's
   `Engine.set_meta(&"mwm_play_shell", true)` changes nothing here.
-- Progress: `user://tile_explorer_save.json` (`current_level`,
-  `highest_level`), written on every win, on pause and on close.
+- Progress: `user://stackling_save.json` (`current_level`,
+  `highest_level`), written on every win, on pause and on close. If it is
+  missing, the old `user://tile_explorer_save.json` from before the rename
+  is read once and copied forward (the old file is left in place).
 
 ## Screenshot and touch bot
 

@@ -10,8 +10,8 @@ config_version=5
 
 [application]
 
-config/name="Tile Explorer"
-config/description="Triple-tile match puzzle. No ads, no IAP."
+config/name="MWM Stackling"
+config/description="Tile matching puzzle for kids. No ads, no IAP. Part of MWM Play."
 run/main_scene="res://scenes/Game3D.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"

@@ -5,7 +5,10 @@ extends Node3D
 # 2D version — only the rendering and animation layer is new.
 
 const POWERUP_CHARGES_PER_LEVEL: int = 3
-const SAVE_PATH: String = "user://tile_explorer_save.json"
+const SAVE_PATH: String = "user://stackling_save.json"
+## Save file from before the rename to MWM Stackling. Read once when the new
+## file is missing, then copied forward; never deleted.
+const LEGACY_SAVE_PATH: String = "user://tile_explorer_save.json"
 const SAVE_VERSION: int = 1
 const RoundButton := preload("res://scripts/RoundButton.gd")
 const GlyphView := preload("res://scripts/GlyphView.gd")
@@ -622,9 +625,14 @@ func _save_progress(level: int) -> void:
 
 # Missing, unreadable or corrupt save: keep the defaults and start fresh.
 func _load_progress() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return
-	var f: FileAccess = FileAccess.open(SAVE_PATH, FileAccess.READ)
+	var path: String = SAVE_PATH
+	var migrating: bool = false
+	if not FileAccess.file_exists(path):
+		if not FileAccess.file_exists(LEGACY_SAVE_PATH):
+			return
+		path = LEGACY_SAVE_PATH
+		migrating = true
+	var f: FileAccess = FileAccess.open(path, FileAccess.READ)
 	if f == null:
 		return
 	var raw: String = f.get_as_text()
@@ -646,6 +654,9 @@ func _load_progress() -> void:
 		else current_level
 	)
 	print("Save: resuming at level %d (highest %d)" % [current_level, highest_level])
+	if migrating:
+		_save_progress(current_level)
+		print("Save: migrated %s -> %s" % [LEGACY_SAVE_PATH, SAVE_PATH])
 
 
 # --- dev harness: TILE_DEVSHOT=/path.png [TILE_DEVTAPS=N] ------------------
